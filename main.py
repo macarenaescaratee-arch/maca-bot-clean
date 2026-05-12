@@ -44,13 +44,16 @@ while True:
 
             elif text == "/si":
                 send_message("🔥 Operaremos sesión Asia")
-
+         
             elif text == "/no":
                 send_message("😴 Bot descansando")
 
+            else:
+                send_message("👋 Hola Maca")
         time.sleep(2)
 
     except Exception as e:
         print(e)
         time.sleep(5)
+
 
