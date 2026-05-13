@@ -1,59 +1,47 @@
 import os
 import requests
-import time
+from flask import Flask, request
 
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
-URL = f"https://api.telegram.org/bot{TOKEN}"
+app = Flask(__name__)
 
-def send_message(text):
-    requests.post(
-        f"{URL}/sendMessage",
-        data={
-            "chat_id": CHAT_ID,
-            "text": text
-        }
-    )
+def send_telegram(message):
+    url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
 
-send_message("🔥 BOT CONECTADO")
+    payload = {
+        "chat_id": CHAT_ID,
+        "text": message
+    }
 
-last_update_id = None
+    requests.post(url, data=payload)
 
-while True:
-    try:
-        response = requests.get(
-            f"{URL}/getUpdates",
-            params={
-                "offset": last_update_id,
-                "timeout": 30
-            }
-        ).json()
+@app.route("/")
+def home():
+    return "Bot activo"
 
-        for update in response["result"]:
+@app.route("/webhook", methods=["POST"])
+def webhook():
 
-            last_update_id = update["update_id"] + 1
+    data = request.json
 
-            if "message" not in update:
-                continue
+    message = f"""
+📈 ALERTA TRADINGVIEW
 
-            text = update["message"].get("text", "").lower()
+Par: {data.get('symbol')}
+Acción: {data.get('action')}
+Precio: {data.get('price')}
+Timeframe: {data.get('timeframe')}
+"""
 
-            if text == "/status":
-                send_message("✅ Bot activo")
+    send_telegram(message)
 
-            elif text == "/si":
-                send_message("🔥 Operaremos sesión Asia")
-         
-            elif text == "/no":
-                send_message("😴 Bot descansando")
+    return {"status": "ok"}
 
-            else:
-                send_message("👋 Hola Maca")
-        time.sleep(2)
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host="0.0.0.0", port=port)
 
-    except Exception as e:
-        print(e)
-        time.sleep(5)
 
 
